@@ -1,0 +1,16 @@
+{
+  "name": "Menu",
+  "keywords": "menu, display",
+  "description": "Menu system for hierarchical menus with button navigation",
+  "repository":
+  {
+    "type": "git",
+    "url": "https://github.com/codemakeshare/Menu.git"
+  },
+  "frameworks": "arduino",
+  "platforms":
+  [
+    "atmelavr",
+    "teensy"
+  ]
+}
