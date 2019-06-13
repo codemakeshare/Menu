@@ -26,7 +26,7 @@ public:
      * @param activeState Polarity of button. Default: low when pushed.
      * @param filterTime De-bouncing rejection time span in millisecond (jitter will be ignored within this time period after the first activation).
      */
-    ButtonPress(uint8_t pin, uint16_t repeatPeriod=0, uint8_t config=INPUT_PULLUP, uint8_t activeState=LOW, uint16_t filterTime=50):
+    ButtonPress(uint8_t pin, uint16_t repeatPeriod=0, uint16_t filterTime=100, uint8_t config=INPUT_PULLUP, uint8_t activeState=LOW):
     pin(pin), activeState(activeState), filterTime(filterTime), repeatPeriod(repeatPeriod), lastState(0), lastChange(0) {
         pinMode(pin, config);
     };

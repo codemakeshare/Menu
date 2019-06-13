@@ -21,8 +21,9 @@ class MenuItem {
 protected:
     char* name;
     bool redraw;
-public:
     Menu* parent;
+public:
+    
     MenuItem(char* aname):
         name(aname), parent(NULL) { };
     /** getText
@@ -52,6 +53,9 @@ public:
      * @brief set redraw flag to trigger a refresh
      */
     void requestRedraw() {redraw = true;};
+    
+    MenuItem* getParent();
+    void setParent(MenuItem* newParent);
 };
 
 
@@ -69,6 +73,27 @@ public:
 
     SubMenuItem(char* aname, Menu* submenu=NULL):
         MenuItem(aname),  submenu(submenu) { };
+    /**
+     * @brief update method override to enter the submenu
+     * @param event: Button events for menu control
+     * @return 
+     */
+    virtual bool update(menu_event_t event); 
+};
+
+/**
+ * @class BackMenuItem
+ * @author felix
+ * @date 13/05/19
+ * @file Menu.h
+ * @brief Subclass of MenuItem to implement a "back" item. If this item is selected, the menu navigation will go back to the enclosing menu..
+ */
+class BackMenuItem: public MenuItem {
+protected:
+public:
+
+    BackMenuItem(char* aname):
+        MenuItem(aname) { };
     /**
      * @brief update method override to enter the submenu
      * @param event: Button events for menu control
@@ -142,27 +167,29 @@ public:
  * @brief Menu class to construct menu structures, consisting of MenuItems. Individual menu items can be submenus, parameters or actions. 
  * Submenus can be cascaded as desired.
  */
-class Menu {
+class Menu: public MenuItem {
 private:
+  bool rollover; // flag if menu should roll around at top and bottom
   MenuItem** items;
   uint8_t selectedItem;
   bool activated;
   bool redraw;
   uint8_t scrollOffset;
   uint8_t maxCount;
-  Menu* parent;
+  //Menu* parent;
   Menu* currentSubmenu;
-
+  uint8_t menuLines; //number of lines that fit on the display
 public:
   /**
    * @brief Constructor for menu. Takes a list of pointers to menu items. Submenus have to be give
    * @param items Array of pointers to menu items
    * @param count Number of menu items in the array
    */
-  Menu(MenuItem** items, uint8_t count) :
-  items(items), selectedItem(0), activated(false), redraw(true), scrollOffset(0), maxCount(count), parent(NULL), currentSubmenu(this)
+  Menu(MenuItem** items, uint8_t count, char* name="", bool rollover=false, uint8_t menuLines=4) :
+  MenuItem(name), items(items), selectedItem(0), activated(false), rollover(rollover), redraw(true), scrollOffset(0), maxCount(count), currentSubmenu(this), menuLines(menuLines)
   {}
   MenuItem* getCurrentItem();
+  
   MenuItem* getItem(uint8_t index);
   
   uint8_t getSelectedItem();
@@ -188,6 +215,8 @@ public:
   void doneRedraw() {redraw = false;};
   void requestRedraw() {redraw = true;};
   
+  void setRollover(bool roll) {rollover = roll;};
+  
   /**
    * @brief Method to run menu navigation. Call this method regularly from the main loop.
    * @param event Button pushes translated to menu_event_t to drive the navigation.
@@ -195,6 +224,12 @@ public:
    */
   MenuItem* navigateMenu(menu_event_t event);
 
+/**
+     * @brief update method override to enter the submenu
+     * @param event: Button events for menu control
+     * @return 
+     */
+    virtual bool update(menu_event_t event); 
 };
 
 #endif

@@ -8,11 +8,23 @@ void MenuItem::getText(char* buffer) {
     strcpy(buffer, name);
 }
 
+MenuItem* MenuItem::getParent() {
+    return parent;
+  }
+void MenuItem::setParent(MenuItem* newParent) {
+    parent=newParent;
+  }
+
 bool SubMenuItem::update(menu_event_t event) {
     if (submenu!=NULL) {
         parent->goSubmenu(submenu);
     }
     return false; // return false to leave activation state
+};
+
+bool BackMenuItem::update(menu_event_t event) {
+    parent->leaveSubmenu();
+    return false;
 };
 
 bool ActionMenuItem::update(menu_event_t event) {
@@ -26,7 +38,7 @@ bool ActionMenuItem::update(menu_event_t event) {
 };
 
 bool ParamMenuItem::update(menu_event_t event) {
-    if (event==MENU_LEAVE) {requestRedraw(); return false;} // nothing to do - just return false
+    if ((event==MENU_LEAVE)||(event==MENU_SELECT)) {requestRedraw(); return false;} // nothing to do - just return false
     if (event==MENU_UP) {parameter->increment();    requestRedraw();}
     if (event==MENU_DOWN) {parameter->decrement();  requestRedraw();}
     
@@ -46,7 +58,6 @@ void ParamMenuItem::getText(char* buffer) {
     char valueBuffer[5];
     parameter->getValueAsString(valueBuffer);
     strcat(buffer, valueBuffer);
-    return buffer;
 }
 
 MenuItem* Menu::getCurrentItem() {
@@ -83,17 +94,30 @@ void Menu::goSubmenu(Menu* submenu) {
 void Menu::leaveSubmenu() {
     currentSubmenu=currentSubmenu->getParent();
     if (currentSubmenu==NULL) currentSubmenu=this;
+    if (parent!=NULL) parent->leaveSubmenu(); // recursively go to root, to set current submenu everywhere
     currentSubmenu->redraw = true;
   }
   
 void Menu::goNext() {
-    if (selectedItem<maxCount-1) selectedItem++;
-    if (selectedItem-scrollOffset>3) scrollOffset=selectedItem-3;
+    selectedItem++;
+    if (selectedItem>=maxCount) 
+    if (rollover) {
+        selectedItem=0;
+    } else {
+        selectedItem=maxCount-1;
+    }
+    if (selectedItem<scrollOffset) scrollOffset=selectedItem;
+    if (selectedItem-scrollOffset>menuLines-1) scrollOffset=selectedItem-(menuLines-1);
   };
   
 void Menu::goPrevious() {
-    if (selectedItem>0)  selectedItem--;
+    if (rollover) {
+        if (selectedItem>0)  selectedItem--; else selectedItem=maxCount-1;
+    } else {
+        if (selectedItem>0)  selectedItem--;
+    }
     if (selectedItem<scrollOffset) scrollOffset=selectedItem;
+    if (selectedItem-scrollOffset>menuLines-1) scrollOffset=selectedItem-(menuLines-1);
   };
 
 
@@ -115,10 +139,9 @@ MenuItem* Menu::navigateMenu(menu_event_t event) {
             case MENU_SELECT:
                 if (currentSubmenu->getCurrentItem()!=NULL) {
                     // set parent to ensure correct return
-                    currentSubmenu->getCurrentItem()->parent = currentSubmenu;
-                    currentSubmenu->activated = currentSubmenu->getCurrentItem()->update(event);
+                    currentSubmenu->getCurrentItem()->setParent(currentSubmenu);
+                    currentSubmenu->activated = currentSubmenu->getCurrentItem()->update(NONE);
                     return currentSubmenu->getCurrentItem();
-                    
                 }
             break;
             case MENU_LEAVE:
@@ -134,4 +157,11 @@ MenuItem* Menu::navigateMenu(menu_event_t event) {
     return NULL;
 }
 
+bool Menu::update(menu_event_t event) {
+    if (parent!=NULL) {
+        parent->goSubmenu(this);
+    }
+    
+    return false; // return false to leave activation state
+};
 

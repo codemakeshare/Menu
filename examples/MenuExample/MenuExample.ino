@@ -16,18 +16,20 @@
 #define I2C_ADDRESS 0x3C
 SSD1306AsciiWire display;   //(Text mode)
  
-// De-bounced button event handlers with 300ms de-bounce blanking time-out
-ButtonPress upButton = ButtonPress(B_UP, 300);
-ButtonPress downButton = ButtonPress(B_DOWN, 300);
-ButtonPress leftButton = ButtonPress(B_LEFT, 300);
-ButtonPress rightButton = ButtonPress(B_RIGHT, 300);
+// De-bounced button event handlers with 300ms repeat period and 100ms de-bounce filter time
+ButtonPress upButton = ButtonPress(B_UP, 300, 100);
+ButtonPress downButton = ButtonPress(B_DOWN, 300, 100);
+
+// no repeat and longer de-bounce time to avoid multiple activations
+ButtonPress leftButton = ButtonPress(B_LEFT, 0, 200); // this button is optional
+ButtonPress rightButton = ButtonPress(B_RIGHT, 0, 200); 
 
 /** Event handler mapping button pushes to menu events
  */
 menu_event_t buttonEvent() {
   if (upButton.pushed()) return MENU_UP;
   if (downButton.pushed()) return MENU_DOWN;
-  if (leftButton.pushed()) return MENU_LEAVE;
+  if (leftButton.pushed()) return MENU_LEAVE; // optional, menu can be used without (a little less convenient)
   if (rightButton.pushed()) return MENU_SELECT;
   return NONE;
 }
@@ -54,7 +56,9 @@ bool updateActionItem(void* argument) {
   int dir=1;
   display.clear();
   while (true) {
-    if (buttonEvent()==MENU_LEAVE) return false;
+    // if the return or select button is pushed, return false to stop and go back to the menu
+    menu_event_t event = buttonEvent();
+    if ((event==MENU_LEAVE)||(event==MENU_SELECT)) return false;
     
     display.setCursor(pos,2);
     display.println(" O ");
@@ -69,12 +73,17 @@ bool updateActionItem(void* argument) {
 }
 
 // ------------ Defining the menu structure ---------------
+// menu item to return from submenus
+// optional for 4-button control, needed for 3-button control
+BackMenuItem backMenuItem = BackMenuItem("back..."); 
 
-// Value parameters, with callback (updateLED)
+// Value parameters
 ParameterInt16 pVal1("Value 0-10", 0, 0, 10, 1);
 ParameterInt16 pVal2("Value 0-100", 50, 0, 100, 1);
 ParameterInt16 pVal3("Value 0-500", 0, 0, 500, 10);
-ParameterInt16 pSwitch1("LED", 0, 0, 1, 1, updateLED);
+ParameterInt16 pSwitch1("LED", 0, 0, 1, 1, updateLED); // value with callback (updateLED)
+
+
 
 // MenuItems for values and LED switch
 MenuItem* valueMenuItems[] = {
@@ -82,24 +91,27 @@ MenuItem* valueMenuItems[] = {
   new ParamMenuItem("Value 0-100", &pVal2, &knob), 
   new ParamMenuItem("Value 0-500", &pVal3, &knob), 
   new ParamMenuItem("LED ", &pSwitch1), 
+  &backMenuItem // optional for 4-button control, needed for 3-button
 };
 // Value submenu
-Menu valueMenu(valueMenuItems, 4);
+Menu valueMenu(valueMenuItems, 5, "Values");
 
 // Nested submenu example
 MenuItem* subSubMenuItems[] = {
-  new SubMenuItem("SubSubValues", &valueMenu), 
-  new SubMenuItem("Item1"), 
-  new SubMenuItem("Item2"), 
+  new SubMenuItem("SubSubValues", &valueMenu), //create a new SubMenuItem to give it a different name
+  new MenuItem("Item1"), 
+  new MenuItem("Item2"), 
+  &backMenuItem // optional for 4-button control, needed for 3-button
 };
-Menu subSubMenu(subSubMenuItems, 3);
+Menu subSubMenu(subSubMenuItems, 4, "Sub-sub-menu");
 
 MenuItem* subMenuItems[] = {
-  new SubMenuItem("SubValues", &valueMenu), 
-  new SubMenuItem("SubSubMenu", &subSubMenu),
-  new ActionMenuItem("Action", &updateActionItem)
+  &subSubMenu,  // we can use a Menu as MenuItem, using the default name of the Menu
+  new SubMenuItem("SubValues", &valueMenu), // or we can create a new SubMenuItem to give it a different name
+  new ActionMenuItem("Action", &updateActionItem), 
+  &backMenuItem // optional for 4-button control, needed for 3-button
 };
-Menu subMenu(subMenuItems, 3);
+Menu subMenu(subMenuItems, 4, "Sub-Menu");
 
 // a long menu, to demonstrate scrolling
 MenuItem* longMenuItems[] = {
@@ -111,19 +123,20 @@ MenuItem* longMenuItems[] = {
   new MenuItem("Item6"), 
   new MenuItem("Item7"), 
   new MenuItem("Item8"), 
+  &backMenuItem // optional for 4-button control, needed for 3-button
 };
-Menu longMenu(longMenuItems, 8);
-
+Menu longMenu(longMenuItems, 9, "Long menu", true); // initialise long menu with rollover=true
 
 // Assembling it all into the main menu
+
 MenuItem* mainMenuItems[] = 
-  {new SubMenuItem("Values", &valueMenu), 
-   new SubMenuItem("Sub-Menu", &subMenu), 
-   new ActionMenuItem("Action", &updateActionItem), 
-   new SubMenuItem("Long Menu", &longMenu), 
+  { (MenuItem*)&valueMenu,
+    (MenuItem*)&subMenu, 
+    new ActionMenuItem("Action", &updateActionItem),
+    (MenuItem*)&longMenu, 
    };
 
-Menu mainMenu = Menu(mainMenuItems, 4);
+Menu mainMenu = Menu(mainMenuItems, 4, "Main menu");
 
 // Instance for the menu visualisation
 MenuDisplay menuDisplay = MenuDisplay(&display);
@@ -134,8 +147,6 @@ void setup() {
   Wire.begin();
   Wire.setClock(400000L);
   display.begin(&Adafruit128x64, I2C_ADDRESS);
-
-  
 }
 
 void loop() {

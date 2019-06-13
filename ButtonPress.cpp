@@ -10,7 +10,7 @@ bool ButtonPress::pushed() {
             return true;
         } else {
             // do auto-repeat
-            if ((repeatPeriod>0) && (now-lastChange>repeatPeriod)) {
+            if ((repeatPeriod>0) && (now-lastChange>repeatPeriod + filterTime)) {
                 lastChange=now;
                 lastState=true;
                 return true;                
