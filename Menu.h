@@ -181,9 +181,11 @@ private:
   uint8_t menuLines; //number of lines that fit on the display
 public:
   /**
-   * @brief Constructor for menu. Takes a list of pointers to menu items. Submenus have to be give
+   * @brief Constructor for menu. Takes a list of pointers to menu items. 
    * @param items Array of pointers to menu items
    * @param count Number of menu items in the array
+   * @param rollover activates roll-over at the top and bottom of the menu
+   * @param menuLines number of lines that fit on the display. 
    */
   Menu(MenuItem** items, uint8_t count, char* name="", bool rollover=false, uint8_t menuLines=4) :
   MenuItem(name), items(items), selectedItem(0), activated(false), rollover(rollover), redraw(true), scrollOffset(0), maxCount(count), currentSubmenu(this), menuLines(menuLines)
