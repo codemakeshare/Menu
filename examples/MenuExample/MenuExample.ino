@@ -136,7 +136,7 @@ MenuItem* mainMenuItems[] =
     (MenuItem*)&longMenu, 
    };
 
-Menu mainMenu = Menu(mainMenuItems, 4, "Main menu");
+Menu mainMenu = Menu(mainMenuItems, 4, "Main menu", false);
 
 // Instance for the menu visualisation
 MenuDisplay menuDisplay = MenuDisplay(&display);

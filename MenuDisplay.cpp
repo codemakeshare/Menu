@@ -10,7 +10,7 @@ void MenuDisplay::updateDisplay(Menu* currentMenu) {
   display->setFont(Arial_bold_14);
   uint8_t startIndex = currentMenu->getScrollOffset();
   uint8_t active = currentMenu->getSelectedItem();
-  for (int i=0; i<4; i++) { 
+  for (int i=0; i<currentMenu->getMenuLines(); i++) { 
     display->setCursor(0,i*2);
     //display->clearToEOL();
     MenuItem* item = currentMenu->getItem(startIndex+i);

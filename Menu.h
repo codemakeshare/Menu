@@ -217,6 +217,8 @@ public:
   
   void setRollover(bool roll) {rollover = roll;};
   
+  uint8_t getMenuLines(void) {return menuLines;};
+  
   /**
    * @brief Method to run menu navigation. Call this method regularly from the main loop.
    * @param event Button pushes translated to menu_event_t to drive the navigation.
