@@ -15,7 +15,6 @@
 //#include <Fonts/FreeMonoBold9pt7b.h>
 
 #include <Wire.h>
-#include "SSD1306Ascii.h"
 #include "SSD1306AsciiWire.h"
 
 #include "Menu.h"
